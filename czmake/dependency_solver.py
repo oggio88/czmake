@@ -110,7 +110,7 @@ def solve_dependencies(source_dir=None, build_dir=None, repo_dir=None, opts=None
                     module = parent_node
                     for cmake_option, values in conf['optdepends'].items():
                         for depobj in values:
-                            if ((cmake_option in module.cmake_options and module.cmake_options[cmake_option] == depobj['value']) or
+                            if ((cmake_option in parent_node.cmake_options and parent_node.cmake_options[cmake_option] == depobj['value']) or
                                         (cmake_option in opts and
                                         opts.get(cmake_option, depobj['value']) == depobj['value'])):
                                 for depname, depobject in depobj['deps'].items():
@@ -170,8 +170,6 @@ def solve_dependencies(source_dir=None, build_dir=None, repo_dir=None, opts=None
                 module_src = join(Module.repodir, 'src', module.name)
                 cmake_file += 'add_subdirectory("%s" "%s")\n' % (module_src, join(Module.repodir, 'build', module.name))
                 processed_modules.add(module)
-                with open(join(module_src, '.czmake_refcount'), 'a') as f:
-                    print(module_src, file=f)
 
 
         walkTree(root, processModule)

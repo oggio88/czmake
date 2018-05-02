@@ -12,9 +12,11 @@ from .utils import DirectoryContext, mkdir, str2bool, cmake_exe, parse_option, d
 
 logger = logging.getLogger(__name__)
 
+
 def fork(*args, **kwargs):
     sys.stdout.write(' '.join(args[0]) + '\n')
     return check_call(*args, **kwargs)
+
 
 def argv_parse():
     parser = argparse.ArgumentParser()
@@ -22,11 +24,11 @@ def argv_parse():
                         help="Calls the install target at the end of the build process")
     parser.add_argument("--package", action='store_true',
                         help="Run CPack at the end of the build process")
-    parser.add_argument("-E", "--cmake-exe", help="use specified cmake executable", metavar='CMAKE_EXE', default=cmake_exe)
     parser.add_argument("-j", "--jobs", metavar="JOBS", type=int,
                         help="maximum number of concurrent jobs (only works if native build system has support for '-j N' command line parameter)")
     parser.add_argument("-T", "--cmake-target", nargs='*', help="build specified cmake target(s)")
-    parser.add_argument("-b", "--build-directory", help="directory in which the build will take place", metavar='BUILD_DIR', default='.')
+    parser.add_argument("-b", "--build-directory", help="directory in which the build will take place",
+                        metavar='BUILD_DIR', default='.')
     parser.add_argument("extra_args", nargs='*', help="extra arguments to pass to CMake or native build system")
     args = parser.parse_args()
     return args
@@ -39,15 +41,7 @@ def build(configuration):
             cfg = json.load(f)
     else:
         cfg = {}
-    cfg['build_directory'] = configuration['build_directory']
-    if configuration['extra_args']:    
-        cfg['extra_args'] = configuration['extra_args']
-    if configuration['cmake_target']:
-        cfg['cmake_target'] = configuration['cmake_target']
-    if configuration['package']:
-        cfg['cmake_target'] = cfg.get('cmake_target', []).append('package')
-    if configuration['install']:
-        cfg['cmake_target'] = cfg.get('cmake_target', []).append('install')
+    update_dict(cfg, configuration)
     env = os.environ
     if platform.system() != 'Windows' and 'MAKEFLAGS' not in os.environ:
         env['MAKEFLAGS'] = "-j%d" % cpu_count()
@@ -71,6 +65,15 @@ def run():
     logging.basicConfig(format='%(levelname)s: %(message)s')
     args = argv_parse()
     build(vars(args))
+    cfg = vars(argv_parse())
+    if cfg.get('package', None):
+        cfg['cmake_target'] = cfg.get('cmake_target', []).append('package')
+        del cfg['package']
+    if cfg.get('install', None):
+        cfg['cmake_target'] = cfg.get('cmake_target', []).append('install')
+        del cfg['install']
+    build(cfg)
+
 
 if __name__ == '__main__':
     run()
