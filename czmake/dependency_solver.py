@@ -71,7 +71,15 @@ def walkTree(root, callback):
             stack.append(StackElement(child))
             stack_element.index += 1
 
-def solve_dependencies(source_dir=None, build_dir=None, repo_dir=None, opts=None, clean=False, generate_cmake=False, module_download=True, update=False):
+def solve_dependencies(source_dir=None, 
+                       build_dir=None, 
+                       repo_dir=None, 
+                       opts=None, 
+                       clean=False, 
+                       generate_cmake=False, 
+                       module_download=True, 
+                       update=False,
+                       show_tree=False):
     source_dir = source_dir or getcwd()
     repo_dir = repo_dir or join(build_dir, 'czmake')
     mkdir(repo_dir)
@@ -150,6 +158,14 @@ def solve_dependencies(source_dir=None, build_dir=None, repo_dir=None, opts=None
                 node.dependencies.add(child)
 
     walkTree(root, build_module_tree)
+
+    if show_tree:
+        def display(node, level):
+            print(" " * 2 * level + (node.name or 'root'))
+            for child in node.children:
+                display(child, level+1)
+        display(root, 0)
+
     if generate_cmake:
         processed_modules = set()
         cmake_file = ''
