@@ -20,9 +20,9 @@ def fork(*args, **kwargs):
 
 def argv_parse():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--install", action='store_true',
+    parser.add_argument("--install", type=str2bool, nargs='?', const=True, metavar='(true|false)',
                         help="Calls the install target at the end of the build process")
-    parser.add_argument("--package", action='store_true',
+    parser.add_argument("--package", type=str2bool, nargs='?', const=True, metavar='(true|false)',
                         help="Run CPack at the end of the build process")
     parser.add_argument("-j", "--jobs", metavar="JOBS", type=int,
                         help="maximum number of concurrent jobs (only works if native build system has support for '-j N' command line parameter)")
@@ -66,12 +66,18 @@ def run():
     args = argv_parse()
     build(vars(args))
     cfg = vars(argv_parse())
-    if cfg.get('package', None):
-        cfg['cmake_target'] = cfg.get('cmake_target', []).append('package')
-        del cfg['package']
-    if cfg.get('install', None):
-        cfg['cmake_target'] = cfg.get('cmake_target', []).append('install')
-        del cfg['install']
+    if isinstance(cfg['cmake_target'], str):
+        cfg['cmake_target'] = set(cfg['cmake_target'])
+    elif cfg['cmake_target']:
+        cfg['cmake_target'] = set(cfg['cmake_target'])
+    if cfg['package']:
+        cfg['cmake_target'] = cfg.get('cmake_target', []) + ['package']
+    elif cfg['package'] == False and cfg['cmake_target']:
+        cfg['cmake_target'] = [target for target in cfg['cmake_target'] if target != 'package']
+    if cfg['install']:
+        cfg['cmake_target'] = cfg.get('cmake_target', []) + ['install']
+    elif cfg['install'] == False and cfg['cmake_target']:
+        cfg['cmake_target'] = [target for target in cfg['cmake_target'] if target != 'install']
     build(cfg)
 
 

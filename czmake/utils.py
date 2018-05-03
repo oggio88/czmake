@@ -12,7 +12,9 @@ def update_dict(original, updated):
         fixed_key = key.replace('-', '_')
         if fixed_key in original and isinstance(value, dict):
             update_dict(original[fixed_key], value)
-        else:
+        elif not fixed_key in original:
+            original[fixed_key] = value
+        elif fixed_key in original and value:
             original[fixed_key] = value
 
 def fork(*args, **kwargs):
